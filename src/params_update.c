@@ -753,7 +753,8 @@ void read_level_and_pan(uint8_t chan)
 		calc_params.level[chan] = 0.f;
 
 	else {
-		if (lfos.to_vca[chan])	level *= lfos.out_lpf[chan];
+		if (params.key_sw[chan] != ksw_MUTE)
+			level *= lfos.out_lpf[chan];
 
 		level *= read_vca_cv(chan);
 
@@ -808,7 +809,6 @@ void read_lfoto_vca_vco(uint8_t i){
 
 	if (button_pressed(butm_LFOVCA_BUTTON)
 			&& !calc_params.keymode_pressed
-			&& (params.key_sw[i] == ksw_MUTE)
 			&& !calc_params.already_handled_button[butm_LFOVCA_BUTTON]) {
 
 		start_ongoing_display_lfo_tovca();
@@ -1022,7 +1022,7 @@ void apply_keymode(uint8_t chan, enum MuteNoteKeyStates new_keymode)
 
 			cache_uncache_keys_params_and_lfos(chan, CACHE);
 			params.note_on[chan] = 0;
-			lfos.to_vca[chan] = 1;
+			// lfos.to_vca[chan] = 1;
 			lfos.mode[chan] = 0;
 			lfos.shape[chan] = KEY_SHAPE;
 
@@ -1100,7 +1100,7 @@ void cache_uncache_keys_params_and_lfos(uint8_t chan, enum CacheUncache cache_un
 		lfos.gain_buf[chan]			= lfos.gain[chan];
 		lfos.phase_id_buf[chan]		= lfos.phase_id[chan];
 		lfos.mode_buf[chan]				= lfos.mode[chan];
-		lfos.to_vca_buf[chan]			= lfos.to_vca[chan];
+		// lfos.to_vca_buf[chan]			= lfos.to_vca[chan];
 
 		params.note_on_buf[chan] 		= params.note_on[chan];
 		params.indiv_scale_buf[chan]	= params.indiv_scale[chan];
@@ -1117,7 +1117,7 @@ void cache_uncache_keys_params_and_lfos(uint8_t chan, enum CacheUncache cache_un
 		lfos.shape[chan]				= lfos.shape_buf[chan];
 		lfos.gain[chan]				= lfos.gain_buf[chan];
 		lfos.mode[chan]					= lfos.mode_buf[chan];
-		lfos.to_vca[chan]				= lfos.to_vca_buf[chan];
+		// lfos.to_vca[chan]				= lfos.to_vca_buf[chan];
 
 		params.note_on[chan] 			= params.note_on_buf[chan];
 		params.indiv_scale[chan]		= params.indiv_scale_buf[chan];
@@ -2343,6 +2343,8 @@ void calc_wt_pos(uint8_t chan){
 	nav_enc[0]	= params.wt_nav_enc[0][chan];
 	nav_enc[1]	= params.wt_nav_enc[1][chan];
 	nav_enc[2]	= params.wt_nav_enc[2][chan];
+	if (lfos.to_vca[chan])
+		nav_enc[2] += lfos.out_lpf[chan] * lfos.gain[chan];
 
 	// BROWSE
 	browse_cv = params.wt_pos_lock[chan] ? 0: params.wt_browse_step_pos_cv;
