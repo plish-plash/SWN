@@ -107,7 +107,7 @@ const uint16_t CH_COLOR_MAP[6][3] = {
 	{ 800 	, 1	 	, 50	}
 };
 
-const uint16_t LFO_BANK_COLOR[25][3]= {
+const uint16_t LFO_BANK_COLOR[NUM_LFO_SHAPES][3]= {
 	{ 1		, 600	, 954	},				// Shades of Blue
 	{ 1		, 318	, 947	},
 	{ 1		, 94 	, 950	},
@@ -142,6 +142,18 @@ const uint16_t LFO_BANK_COLOR[25][3]= {
 	{ 954 	, 1		, 40 	},
 	{ 904 	, 1	 	, 20	},
 	{ 800 	, 1	 	, 0	    }
+};
+
+const uint16_t LFO_KEY_BANK_COLOR[NUM_LFO_KEY_SHAPES][3]= {
+	{ 1		, 600	, 954	},				// Shades of Blue
+	{ 1		, 318	, 947	},
+	{ 1		, 94 	, 950	},
+	{ 1		, 12	, 954	},
+	{ 502	, 309 	, 43 	},				// Yellow
+	{ 954 	, 1		, 282 	},				// Shades of Red
+	{ 941 	, 35 	, 947	},
+	{ 935 	, 116	, 928	},
+	{ 941  	, 366	, 954	},
 };
 
 enum colorCodes key_sw_mode_colors[NUM_MUTE_NOTE_KEY_STATES];
@@ -634,8 +646,10 @@ void calculate_lfocv_led(void)
 
 void calculate_lfo_leds(void)
 {
-	uint8_t chan=0;
+	uint8_t chan=0, enc_pressed;
 	float brightness;
+
+	enc_pressed = rotary_pressed(rotm_LFOSHAPE);
 
 	for (chan = 0; chan < NUM_CHANNELS; chan++)
 	{
@@ -646,7 +660,20 @@ void calculate_lfo_leds(void)
 		else
 			brightness = lfos.out_lpf[chan];
 
-		set_rgb_color_by_array(&led_cont.array[chan], LFO_BANK_COLOR[lfos.shape[chan]], brightness);
+		if (params.key_sw[chan] == ksw_MUTE) {
+			set_rgb_color_by_array(&led_cont.array[chan], LFO_BANK_COLOR[lfos.shape[chan]], brightness);
+		}
+		else if (enc_pressed) {
+			if (lfos.cycle_pos[chan] == 0)
+				set_rgb_color(&led_cont.array[chan], ledc_OFF);
+			else if (lfos.cycle_pos[chan] <= lfos.phase[chan])
+				set_rgb_color(&led_cont.array[chan], ledc_MED_RED);
+			else
+				set_rgb_color(&led_cont.array[chan], ledc_MED_BLUE);
+		}
+		else {
+			set_rgb_color_by_array(&led_cont.array[chan], LFO_KEY_BANK_COLOR[lfos.shape[chan]], brightness);
+		}
 	}
 }
 

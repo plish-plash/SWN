@@ -1033,8 +1033,8 @@ void apply_keymode(uint8_t chan, enum MuteNoteKeyStates new_keymode)
 			lfos.divmult_id[chan] = LFO_UNITY_DIVMULT_ID+2;
 			flag_lfo_recalc(chan);
 
-			lfos.phase_id[chan] = 0;
-			lfos.phase[chan] = 0;
+			lfos.phase_id[chan] = 4;
+			lfos.phase[chan] = calc_lfo_phase(lfos.phase_id[chan]);
 		}
 
 		//Switched to MUTE

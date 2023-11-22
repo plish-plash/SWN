@@ -269,7 +269,10 @@ void update_lfo_sample(void)
 				rh0 				= (uint16_t)pos_in_table;
 				rh1 				= (rh0 + 1) & (LFO_TABLELEN-1); //if rh0==255, then rh1 should = 0. (255+1)&(255) == 0x100 & 0x0FF == 0
 				lfo_frac 			= pos_in_table - (float)rh0;
-				lfos.preload[chan] 	= (((lfo_wavetable[lfos.shape[chan]][rh0] * (1.0-lfo_frac) + lfo_wavetable[lfos.shape[chan]][rh1] * lfo_frac))) ;
+				if (params.key_sw[chan] == ksw_MUTE)
+					lfos.preload[chan] 	= (((lfo_wavetable[lfos.shape[chan]][rh0] * (1.0-lfo_frac) + lfo_wavetable[lfos.shape[chan]][rh1] * lfo_frac)));
+				else
+					lfos.preload[chan] 	= (((lfo_key_wavetable[lfos.shape[chan]][rh0] * (1.0-lfo_frac) + lfo_key_wavetable[lfos.shape[chan]][rh1] * lfo_frac)));
 			}
 			else
 				lfos.preload[chan] 	= 0;	
@@ -523,19 +526,27 @@ void read_LFO_phase(void)
 		disable_phase_sync = 1;
 		stage_phase_sync = 0;
 		if (fine)
-			enc_amount = -enc_turn * F_SCALING_FINE_LFO_PHASE;
+			enc_amount = enc_turn * F_SCALING_FINE_LFO_PHASE;
 		else
-			enc_amount = -enc_turn;
+			enc_amount = enc_turn;
 
 		// GLOBAL
 		if (macro_states.all_af_buttons_released){
 			for (i = 0; i < NUM_CHANNELS; i++){
 				if (!lfos.locked[i])
 				{
-					if (!fine)
-						lfos.phase_id[i] = _WRAP_I16(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
-					else
-						lfos.phase_id[i] = _WRAP_F(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+					if (params.key_sw[i] == ksw_MUTE) {
+						if (!fine)
+							lfos.phase_id[i] = _WRAP_I16(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+						else
+							lfos.phase_id[i] = _WRAP_F(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+					}
+					else {
+						if (!fine)
+							lfos.phase_id[i] = _CLAMP_I16(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+						else
+							lfos.phase_id[i] = _CLAMP_F(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+					}
 
 					lfos.phase[i] = calc_lfo_phase(lfos.phase_id[i]);
 				}
@@ -547,10 +558,18 @@ void read_LFO_phase(void)
 			for (i = 0; i < NUM_CHANNELS; i++){
 				if(button_pressed(i))
 				{
-					if (!fine)
-						lfos.phase_id[i] = _WRAP_I16(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
-					else
-						lfos.phase_id[i] = _WRAP_F(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+					if (params.key_sw[i] == ksw_MUTE) {
+						if (!fine)
+							lfos.phase_id[i] = _WRAP_I16(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+						else
+							lfos.phase_id[i] = _WRAP_F(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+					}
+					else {
+						if (!fine)
+							lfos.phase_id[i] = _CLAMP_I16(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+						else
+							lfos.phase_id[i] = _CLAMP_F(lfos.phase_id[i] + enc_amount, 0, LFO_PHASE_TABLELEN);
+					}
 
 					calc_params.already_handled_button[i] = 1;
 					lfos.phase[i] = calc_lfo_phase(lfos.phase_id[i]);
@@ -574,9 +593,15 @@ void read_LFO_shape(void)
 			for (i = 0; i < NUM_CHANNELS; i++){
 				if (!lfos.locked[i])
 				{
-					lfos.shape[i] = _WRAP_I16(lfos.shape[i] + enc, 0 , NUM_LFO_SHAPES);
+					if (params.key_sw[i] == ksw_MUTE) {
+						lfos.shape[i] = _WRAP_I16(lfos.shape[i] + enc, 0, NUM_LFO_SHAPES);
+						led_cont.lfoshape_timeout[i] = 0;
+					}
+					else {
+						lfos.shape[i] = _CLAMP_I16(lfos.shape[i] + enc, 0, NUM_LFO_KEY_SHAPES - 1);
+						led_cont.lfoshape_timeout[i] = 1;
+					}
 					led_cont.ongoing_lfoshape[i] = 1;
-					led_cont.lfoshape_timeout[i] = params.key_sw[i]!=ksw_MUTE;								
 				}
 			}
 		}
@@ -586,11 +611,16 @@ void read_LFO_shape(void)
 			for (i=0; i < NUM_CHANNELS; i++){ 
 				if(button_pressed(i))
 				{
-					lfos.shape[i] = _WRAP_I16(lfos.shape[i] + enc, 0 , NUM_LFO_SHAPES);
-					calc_params.already_handled_button[i] = 1; 
-
+					if (params.key_sw[i] == ksw_MUTE) {
+						lfos.shape[i] = _WRAP_I16(lfos.shape[i] + enc, 0, NUM_LFO_SHAPES);
+						led_cont.lfoshape_timeout[i] = 0;
+					}
+					else {
+						lfos.shape[i] = _CLAMP_I16(lfos.shape[i] + enc, 0, NUM_LFO_KEY_SHAPES - 1);
+						led_cont.lfoshape_timeout[i] = 1;
+					}
 					led_cont.ongoing_lfoshape[i] = 1;
-					led_cont.lfoshape_timeout[i] = params.key_sw[i]!=ksw_MUTE;							
+					calc_params.already_handled_button[i] = 1; 
 				}	
 			}
 		}

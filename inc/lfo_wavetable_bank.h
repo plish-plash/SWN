@@ -34,8 +34,9 @@
 #define 	F_LFO_TABLELEN 	256.0
 #define	 	F_MAX_LFO_TABLELEN	(float)(F_LFO_TABLELEN - 1.0)	
 #define 	NUM_LFO_SHAPES  25 
+#define 	NUM_LFO_KEY_SHAPES  9
 #define 	MAX_LFO_WT_VAL 	256
-#define 	KEY_SHAPE		0
+#define 	KEY_SHAPE		4
 	
 extern const uint8_t 		lfo_wavetable[NUM_LFO_SHAPES][LFO_TABLELEN];
-extern const uint8_t 		lfo_sustain_pos[NUM_LFO_SHAPES];
+extern const uint8_t 		lfo_key_wavetable[NUM_LFO_KEY_SHAPES][LFO_TABLELEN];
