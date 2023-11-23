@@ -1,6 +1,19 @@
 # Spherical Wavetable Navigator
 
-Firmware for the Spherical Wavetable Navigator, a Eurorack-format module from 4ms Company.
+Custom fork of the firmware for the Spherical Wavetable Navigator, a Eurorack-format module from 4ms Company.
+
+## This Fork
+
+I primarily use my SWN as six independent voices by putting all the channels in CV/Gate mode, and the changes in this fork facilitate that use case. See page 20 of the SWN manual for more information on the different channel modes.
+
+### Major Changes
+- **Replaced LFO->VCA routing with LFO->Longitude**: In all channel modes except for Mute, the LFO->VCA button did nothing, as the LFOs are always routed to the VCAs in those modes. Now, that button instead routes the LFOs to each channel's longitude parameter, and works in all modes. This causes the timbre of the note to change with the volume, which sounds nice. The amount of modulation is controlled by the LFO's gain.
+- **Better envelope LFOs**: The LFO shapes included with the SWN are not the best for envelopes. Now, when a channel is in any non-Mute mode, it will use actual AR or ASR envelopes. Changing the LFO shape will adjust the envelope curve from exponential to logarithmic and changing the LFO phase will adjust the ratio of attack to release. As before, the LFO speed determines the overall envelope duration.
+  - The LFO LED color shows the envelope curve: pale blue for fully exponential, dark blue for slightly exponential, orange for linear, dark red for slightly logarithmic, pale red for very logarithmic.
+  - While holding down the LFO shape knob, the LFO LED instead shows the progress of the envelope: red during the attack, blue during the release.
+
+### Minor Changes
+- Reversed the direction of the knob when changing the LFO phase.
 
 ## Setting up the gcc-arm toolchain
 You need to install the GCC ARM toolchain.
