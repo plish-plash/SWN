@@ -753,7 +753,7 @@ void read_level_and_pan(uint8_t chan)
 		calc_params.level[chan] = 0.f;
 
 	else {
-		if (params.key_sw[chan] != ksw_MUTE)
+		if (params.key_sw[chan] != ksw_MUTE || lfos.to_vca[chan])
 			level *= lfos.out_lpf[chan];
 
 		level *= read_vca_cv(chan);
@@ -1033,8 +1033,8 @@ void apply_keymode(uint8_t chan, enum MuteNoteKeyStates new_keymode)
 			lfos.divmult_id[chan] = LFO_UNITY_DIVMULT_ID+2;
 			flag_lfo_recalc(chan);
 
-			lfos.phase_id[chan] = 4;
-			lfos.phase[chan] = calc_lfo_phase(lfos.phase_id[chan]);
+			lfos.phase_id[chan] = 0;
+			lfos.phase[chan] = 0;
 		}
 
 		//Switched to MUTE
@@ -2343,8 +2343,8 @@ void calc_wt_pos(uint8_t chan){
 	nav_enc[0]	= params.wt_nav_enc[0][chan];
 	nav_enc[1]	= params.wt_nav_enc[1][chan];
 	nav_enc[2]	= params.wt_nav_enc[2][chan];
-	if (lfos.to_vca[chan])
-		nav_enc[2] += lfos.out_lpf[chan] * lfos.gain[chan];
+	if (lfos.to_vca[chan] && params.key_sw[chan] != ksw_MUTE)
+		nav_enc[2] += lfos.out_lpf[chan] * lfos.gain[chan] * 2.0;
 
 	// BROWSE
 	browse_cv = params.wt_pos_lock[chan] ? 0: params.wt_browse_step_pos_cv;

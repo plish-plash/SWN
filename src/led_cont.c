@@ -664,9 +664,9 @@ void calculate_lfo_leds(void)
 			set_rgb_color_by_array(&led_cont.array[chan], LFO_BANK_COLOR[lfos.shape[chan]], brightness);
 		}
 		else if (enc_pressed) {
-			if (lfos.cycle_pos[chan] == 0)
+			if (!params.note_on[chan])
 				set_rgb_color(&led_cont.array[chan], ledc_OFF);
-			else if (lfos.cycle_pos[chan] <= lfos.phase[chan])
+			else if (lfos.wt_pos[chan] <= 0.5)
 				set_rgb_color(&led_cont.array[chan], ledc_MED_RED);
 			else
 				set_rgb_color(&led_cont.array[chan], ledc_MED_BLUE);

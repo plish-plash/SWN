@@ -121,8 +121,6 @@ void update_lfo_wt_pos(void)
 		//Note/Key mode: one-shot LFOs (Envelopes)
 		else
 		{
-			float sustain_pos = lfos.phase[chan];
-
 			if (params.note_on[chan] && ((lfos.cycle_pos[chan] + lfos.inc[chan])>=1.0) ) {
 				params.note_on[chan] = 0;
 			}
@@ -130,28 +128,22 @@ void update_lfo_wt_pos(void)
 			else if (!params.note_on[chan]) {
 				wt_osc.wt_head_pos[chan] = 0;
 				lfos.cycle_pos[chan] = 0;
-			}
-
-			else if (!calc_params.gate_in_is_sustaining[chan]) {
-				lfos.cycle_pos[chan] += lfos.inc[chan];
-			}
-			else {
-				uint8_t will_cross_sustain_position = (lfos.cycle_pos[chan]<=sustain_pos) && ((lfos.cycle_pos[chan] + lfos.inc[chan])>sustain_pos);
-				if (will_cross_sustain_position) {
-					lfos.cycle_pos[chan] = sustain_pos;
-				} else {
-					lfos.cycle_pos[chan] += lfos.inc[chan];
-				}
-			}
-
-			if (lfos.cycle_pos[chan] == 0) {
 				lfos.wt_pos[chan] = 0;
 			}
-			else if (lfos.cycle_pos[chan] <= sustain_pos) {
-				lfos.wt_pos[chan] = 0.5 * (lfos.cycle_pos[chan] / sustain_pos);
-			}
+
 			else {
-				lfos.wt_pos[chan] = 0.5 + 0.5 * ((lfos.cycle_pos[chan] - sustain_pos) / (1.0 - sustain_pos));
+				float sustain_pos = lfos.phase[chan];
+				if (calc_params.gate_in_is_sustaining[chan] && (lfos.cycle_pos[chan]<=sustain_pos) && ((lfos.cycle_pos[chan] + lfos.inc[chan])>sustain_pos)) {
+					lfos.cycle_pos[chan] = sustain_pos;
+					lfos.wt_pos[chan] = 0.5;
+				} else {
+					lfos.cycle_pos[chan] += lfos.inc[chan];
+					if (lfos.cycle_pos[chan] <= sustain_pos) {
+						lfos.wt_pos[chan] = 0.5 * (lfos.cycle_pos[chan] / sustain_pos);
+					} else {
+						lfos.wt_pos[chan] = 0.5 + 0.5 * ((lfos.cycle_pos[chan] - sustain_pos) / (1.0 - sustain_pos));
+					}
+				}
 			}
 		}
 	}
