@@ -530,19 +530,19 @@ void read_ext_trigs(void)
 		{
 			chans_in_cvgate_mode++;
 
-			if (analog_jack_plugged(A_VOCT+chan) || button_pressed(chan)) {
-				if ((trig_level[chan] || button_pressed(chan)) && !last_trig_level[chan])
+			if (analog_jack_plugged(A_VOCT+chan)) {
+				if (trig_level[chan] && !last_trig_level[chan])
 				{
 					lfos.cycle_pos[chan] = 0.f;
 					params.note_on[chan] = 1;
 					params.new_key[chan] = 1;
 					new_key_armed[chan] = 0;
 				}
-				if (params.key_sw[chan]==ksw_KEYS_EXT_TRIG_SUSTAIN && (trig_level[chan] || button_pressed(chan)))
+				if (params.key_sw[chan]==ksw_KEYS_EXT_TRIG_SUSTAIN && trig_level[chan])
 					is_sustaining = 1;
 			}
 		}
-		last_trig_level[chan] = (trig_level[chan] || button_pressed(chan));
+		last_trig_level[chan] = trig_level[chan];
 		calc_params.gate_in_is_sustaining[chan] = is_sustaining;
 	}
 
@@ -652,17 +652,11 @@ void read_noteon(uint8_t i)
 					lfos.cycle_pos[i] = 5.0/F_MAX_LFO_TABLELEN;  // read 5th element of LFO table to avoid silence at start
 				}
 
-				if (!new_key_armed[i]) {
+				if ((params.key_sw[i] == ksw_NOTE || params.key_sw[i] == ksw_KEYS) && !new_key_armed[i]) {
 					new_key_armed[i] = 1;
 					params.new_key[i] = 1;
 					params.note_on[i] = 1;
-					if (params.key_sw[i]==ksw_KEYS_EXT_TRIG)
-						lfos.cycle_pos[i] = 0;
 				}
-				// if (params.key_sw[i]==ksw_KEYS_EXT_TRIG_SUSTAIN) {
-				// 	calc_params.gate_in_is_sustaining[i] = 1;
-				// 	lfos.cycle_pos[i] = 0;
-				// }
 			}
 			else //button_released(i)
 			{
